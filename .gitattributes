@@ -1,0 +1,5 @@
+# Auto-detect text files but force LF for files that round-trip via
+# byte-stable serializers in tests.
+* text=auto
+*.go text eol=lf
+internal/markdown/testdata/golden/*.md text eol=lf

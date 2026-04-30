@@ -1,0 +1,19 @@
+# Build output
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+coverage.txt
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local workspace state created by the tool itself
+.sync/

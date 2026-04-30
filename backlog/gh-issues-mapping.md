@@ -26,7 +26,7 @@ Map Markdown item properties to/from GitHub Issue fields.
 | Milestone                | `milestone.title`            |
 | RemoteId                 | `number`                     |
 | Url                      | `html_url`                   |
-| Parent                   | Sub-issue / task-list ref (best-effort, capability-flagged) |
+| Parent                   | See `gh-sub-issues-and-tasklists` — native sub-issues, task lists, or Projects v2 parent field |
 
 ## Acceptance criteria
 - Body is stored verbatim Markdown (no conversion needed).

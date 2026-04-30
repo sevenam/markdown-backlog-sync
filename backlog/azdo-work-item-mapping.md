@@ -27,7 +27,7 @@ Map Markdown item properties to/from Azure DevOps work-item fields.
 | Labels            | `System.Tags` (semicolon list) |
 | Iteration         | `System.IterationPath`         |
 | AreaPath          | `System.AreaPath`              |
-| Parent            | Parent link (`System.LinkTypes.Hierarchy-Reverse`) |
+| Parent            | Parent link (`System.LinkTypes.Hierarchy-Reverse`); see `azdo-work-item-types-ladder` for the ladder rules |
 | Estimate          | `Microsoft.VSTS.Scheduling.StoryPoints` |
 
 ## Acceptance criteria
