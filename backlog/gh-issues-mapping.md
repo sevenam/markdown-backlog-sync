@@ -2,34 +2,12 @@
 
 ## Properties
 Type
-:   Feature
-Area
-:   GitHub Issues
+:   issue
 State
-:   Done
-Priority
-:   1
-Phase
-:   2
-
-## Summary
-Map Markdown item properties to/from GitHub Issue fields.
-
-## Mapping (default)
-| Markdown property        | GitHub Issue field           |
-| ------------------------ | ---------------------------- |
-| H1 title                 | `title`                      |
-| Body (sections preserved)| `body` (Markdown, native)    |
-| State                    | `state` (`open` / `closed`) + `state_reason` |
-| Assignee / Assignees     | `assignees`                  |
-| Labels                   | `labels`                     |
-| Milestone                | `milestone.title`            |
-| RemoteId                 | `number`                     |
-| Url                      | `html_url`                   |
-| Parent                   | See `gh-sub-issues-and-tasklists` — native sub-issues, task lists, or Projects v2 parent field |
-
-## Acceptance criteria
-- Body is stored verbatim Markdown (no conversion needed).
-- Closed-as-not-planned vs completed preserved via `state_reason`.
-- Labels and milestones only push on remote that accepts them; otherwise
-  warn (capability flag).
+:   closed
+RemoteId
+:   27
+Url
+:   https://github.com/sevenam/markdown-backlog-sync/issues/27
+state_reason
+:   completed
