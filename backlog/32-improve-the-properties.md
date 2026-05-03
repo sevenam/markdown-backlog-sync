@@ -2,7 +2,7 @@
 
 ## Properties
 Type: issue
-State: open
+State: Done
 RemoteId: 32
 Url: https://github.com/sevenam/markdown-backlog-sync/issues/32
 
