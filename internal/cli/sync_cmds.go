@@ -146,6 +146,26 @@ func pullProvider(
 			localPath = filepath.Join(ws.ItemsDir, safeFilename(item.ID, item.Title))
 		}
 
+		// Rename existing files to the canonical issue-number-prefixed name,
+		// e.g. "core-cli-skeleton.md" → "7-core-cli-skeleton-cobra-viper.md".
+		// This happens on pull so every tracked file carries its remote ID.
+		canonicalPath := filepath.Join(ws.ItemsDir, safeFilename(item.ID, item.Title))
+		needsRename := exists && filepath.Clean(localPath) != filepath.Clean(canonicalPath)
+		if needsRename {
+			if verbose {
+				fmt.Fprintf(w, "  [rename] %s → %s\n", filepath.Base(localPath), filepath.Base(canonicalPath))
+			}
+			if !dryRun {
+				if renameErr := os.Rename(localPath, canonicalPath); renameErr != nil {
+					if !errors.Is(renameErr, os.ErrNotExist) {
+						return count, fmt.Errorf("rename %s: %w", filepath.Base(localPath), renameErr)
+					}
+					// Old file already gone — just write to canonical path.
+				}
+				localPath = canonicalPath
+			}
+		}
+
 		if verbose {
 			action := "update"
 			if !exists {
