@@ -7,8 +7,8 @@ TOML front-matter.
 ## Required structure
 
 1. The first non-empty line MUST be an H1 — that is the item title.
-2. The first H2 MUST be `## Properties` and use a Markdown definition
-   list to encode item metadata.
+2. The first H2 MUST be `## Properties` and use `Key: Value` lines to
+   encode item metadata.
 3. Any further H2 sections (`## Summary`, `## Acceptance criteria`,
    `## Notes`, etc.) are preserved verbatim during round-trip.
 
@@ -16,13 +16,10 @@ TOML front-matter.
 # Add OAuth login
 
 ## Properties
-Type
-:   Feature
-State
-:   In Progress
-Labels
-:   auth
-:   priority/high
+Type: Feature
+State: In Progress
+Labels: auth
+Labels: priority/high
 
 ## Summary
 Some prose…
@@ -34,11 +31,11 @@ Some prose…
 
 ## Property values
 
-- A property term is a non-empty line.
-- The next line(s) start with `:   ` (colon + three spaces). Multiple
-  consecutive `:   ` lines combine into a multi-value (used for things
-  like `Labels`).
-- A blank line ends the current property.
+- Each property is a single `Key: Value` line.
+- For multi-value properties (e.g. `Labels`, `Assignees`), repeat the
+  key on consecutive lines — one value per line.
+- The legacy definition-list format (`Term` on its own line, `":   Value"`
+  on the next) is still accepted for backward compatibility.
 
 ## Sync state
 

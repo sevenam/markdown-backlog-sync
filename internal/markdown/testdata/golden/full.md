@@ -1,17 +1,12 @@
 # Full example item
 
 ## Properties
-Type
-:   Feature
-State
-:   In Progress
-Priority
-:   1
-Labels
-:   alpha
-:   beta
-Assignee
-:   alice@example.com
+Type: Feature
+State: In Progress
+Priority: 1
+Labels: alpha
+Labels: beta
+Assignee: alice@example.com
 
 ## Summary
 A multi-paragraph summary.

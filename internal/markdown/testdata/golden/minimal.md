@@ -1,7 +1,5 @@
 # Minimal item
 
 ## Properties
-Type
-:   Feature
-State
-:   Proposed
+Type: Feature
+State: Proposed

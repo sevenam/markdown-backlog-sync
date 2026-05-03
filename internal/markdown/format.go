@@ -2,10 +2,15 @@
 //
 // Files are pure Markdown — no YAML/TOML front-matter. The first non-empty
 // line MUST be an H1 with the item title. A single "## Properties" section
-// MUST appear before any other H2; properties are encoded as a Markdown
-// definition list (term on its own line, value lines starting with ":   ").
+// MUST appear before any other H2; properties are encoded as "Key: Value"
+// lines (one per line). Repeat the key for multi-value properties:
 //
-// Sections after Properties are preserved verbatim.
+//	Labels: bug
+//	Labels: priority/high
+//
+// The legacy definition-list format (term on its own line, value on the
+// next line prefixed with ":   ") is still accepted for backward
+// compatibility but is not produced by Serialize.
 package markdown
 
 import (
@@ -247,7 +252,32 @@ func parseProperties(body []string, startLine int) (Properties, error) {
 			i++
 			continue
 		}
-		// A property term is a non-empty line not starting with ":".
+
+		// New format: "Key: Value" on a single line.
+		// The key is everything before the first ": "; it must be non-empty
+		// and the line must not start with ":" (which would be a legacy value
+		// continuation).
+		if colonIdx := strings.Index(raw, ": "); colonIdx > 0 && !strings.HasPrefix(raw, ":") {
+			key := strings.TrimSpace(raw[:colonIdx])
+			value := strings.TrimSpace(raw[colonIdx+2:])
+			if key == "" {
+				return p, parseErrf(ln, "empty property key")
+			}
+			// Repeated keys accumulate into a multi-value property (newline-
+			// separated internally, matching the legacy multi-value convention).
+			if existing, ok := p.values[key]; ok {
+				p.values[key] = existing + "\n" + value
+			} else {
+				if err := p.add(key, value); err != nil {
+					return p, parseErrf(ln, "%v", err)
+				}
+			}
+			i++
+			continue
+		}
+
+		// Legacy definition-list format: term on its own line, followed by
+		// one or more ":   Value" lines. Kept for backward compatibility.
 		if strings.HasPrefix(raw, ":") {
 			return p, parseErrf(ln, "unexpected definition value without a preceding term")
 		}
@@ -255,7 +285,6 @@ func parseProperties(body []string, startLine int) (Properties, error) {
 		if term == "" {
 			return p, parseErrf(ln, "empty property term")
 		}
-		// Collect contiguous value lines.
 		i++
 		var values []string
 		sawValue := false
@@ -279,7 +308,7 @@ func parseProperties(body []string, startLine int) (Properties, error) {
 			break
 		}
 		if !sawValue {
-			return p, parseErrf(ln, "property %q has no value (expected \":   value\" on the next line)", term)
+			return p, parseErrf(ln, "property %q has no value (expected \"Key: Value\" format or \":   value\" on the next line)", term)
 		}
 		if err := p.add(term, strings.Join(values, "\n")); err != nil {
 			return p, parseErrf(ln, "%v", err)
@@ -305,12 +334,12 @@ func Serialize(it *Item) (string, error) {
 	b.WriteString("\n\n## Properties\n")
 	for _, k := range it.Properties.keys {
 		v := it.Properties.values[k]
-		b.WriteString(k)
-		b.WriteString("\n")
-		// Multi-line values: each line gets ":   " prefix.
+		// Multi-value properties are stored as newline-separated strings;
+		// emit one "Key: Value" line per value.
 		lines := strings.Split(v, "\n")
 		for _, ln := range lines {
-			b.WriteString(":   ")
+			b.WriteString(k)
+			b.WriteString(": ")
 			b.WriteString(ln)
 			b.WriteString("\n")
 		}
