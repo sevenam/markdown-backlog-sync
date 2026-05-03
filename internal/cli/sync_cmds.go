@@ -19,13 +19,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// notImplemented is a placeholder used by command stubs that require
-// subsequent phases (sync engine + concrete providers) to do real work.
-func notImplemented(cmd *cobra.Command, what string) error {
-	fmt.Fprintf(cmd.ErrOrStderr(), "%s is not yet implemented in this build\n", what)
-	return exitcode.Errorf(exitcode.Usage, "%s requires a full sync engine implementation", what)
-}
-
 func newPullCmd(g *GlobalFlags) *cobra.Command {
 	var providerName string
 	cmd := &cobra.Command{
