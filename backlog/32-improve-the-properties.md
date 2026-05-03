@@ -2,9 +2,10 @@
 
 ## Properties
 Type: issue
-State: Done
+State: closed
 RemoteId: 32
 Url: https://github.com/sevenam/markdown-backlog-sync/issues/32
+state_reason: completed
 
 ## Description
 The Properties in the markdown is not very human readable and should be improved.
