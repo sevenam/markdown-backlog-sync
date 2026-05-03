@@ -4,7 +4,7 @@
 Type
 :   issue
 State
-:   open
+:   Done
 RemoteId
 :   33
 Url
