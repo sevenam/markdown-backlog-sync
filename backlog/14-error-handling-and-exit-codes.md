@@ -5,3 +5,4 @@ Type: issue
 State: closed
 RemoteId: 14
 Url: https://github.com/sevenam/markdown-backlog-sync/issues/14
+state_reason: completed
