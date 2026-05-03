@@ -144,13 +144,22 @@ func (p *Provider) Get(ctx context.Context, remoteID string) (provider.RemoteIte
 
 // Create opens a new GitHub issue.
 func (p *Provider) Create(ctx context.Context, item provider.RemoteItem) (provider.RemoteItem, error) {
+	assignees := item.Assignees
+	if assignees == nil {
+		assignees = []string{}
+	}
+	labels := item.Labels
+	if labels == nil {
+		labels = []string{}
+	}
 	req := &gogithub.IssueRequest{
 		Title:     gogithub.Ptr(item.Title),
 		Body:      gogithub.Ptr(item.Body),
-		Assignees: &item.Assignees,
+		Assignees: &assignees,
+		Labels:    &labels,
 	}
-	if len(item.Labels) > 0 {
-		req.Labels = &item.Labels
+	if item.State != "" {
+		req.State = gogithub.Ptr(toGitHubState(item.State))
 	}
 	if item.Milestone != "" {
 		ms, err := p.resolveMilestone(ctx, item.Milestone)
@@ -197,7 +206,8 @@ func (p *Provider) Update(ctx context.Context, remoteID string, patch provider.I
 		req.Body = patch.Body
 	}
 	if patch.State != nil {
-		req.State = patch.State
+		mapped := toGitHubState(*patch.State)
+		req.State = &mapped
 		// GitHub requires state_reason when closing as not-planned.
 		if v, ok := patchProperty(patch, "state_reason"); ok {
 			req.StateReason = gogithub.Ptr(v)

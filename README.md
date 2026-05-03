@@ -20,6 +20,12 @@ Pre-built binaries will be published via GitHub Releases (see
 
 ## Quickstart
 
+Build:
+
+```bash
+go build -o bin/mbs.exe ./cmd/mbs
+```
+
 ```bash
 mbs init                 # create backlog.config.toml + backlog/ + .sync/
 $EDITOR backlog.config.toml

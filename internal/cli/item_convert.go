@@ -93,6 +93,136 @@ func safeFilename(id, title string) string {
 	return id + "-" + slug + ".md"
 }
 
+// markdownToRemoteItem converts a parsed markdown Item to a provider RemoteItem
+// suitable for Create calls. Tracking-only fields (RemoteId, Url) are ignored.
+func markdownToRemoteItem(it *markdown.Item) provider.RemoteItem {
+	ri := provider.RemoteItem{Title: it.Title}
+	if v, ok := it.Properties.Get("Type"); ok {
+		ri.Type = v
+	}
+	if v, ok := it.Properties.Get("State"); ok {
+		ri.State = v
+	}
+	if v, ok := it.Properties.Get("Assignees"); ok {
+		ri.Assignees = splitLines(v)
+	}
+	if v, ok := it.Properties.Get("Labels"); ok {
+		ri.Labels = splitLines(v)
+	}
+	if v, ok := it.Properties.Get("Milestone"); ok {
+		ri.Milestone = v
+	}
+	if v, ok := it.Properties.Get("Iteration"); ok {
+		ri.Iteration = v
+	}
+	if v, ok := it.Properties.Get("AreaPath"); ok {
+		ri.AreaPath = v
+	}
+	if v, ok := it.Properties.Get("Parent"); ok {
+		ri.Parent = v
+	}
+	if sec := it.Section("Description"); sec != nil {
+		ri.Body = sec.Body
+	}
+	knownFields := knownCoreFields()
+	for _, k := range it.Properties.Keys() {
+		if !knownFields[k] {
+			v, _ := it.Properties.Get(k)
+			if ri.Properties == nil {
+				ri.Properties = map[string]string{}
+			}
+			ri.Properties[k] = v
+		}
+	}
+	return ri
+}
+
+// markdownToItemPatch converts a parsed markdown Item to an ItemPatch for
+// Update calls. All present fields are included in the patch.
+func markdownToItemPatch(it *markdown.Item) provider.ItemPatch {
+	patch := provider.ItemPatch{}
+
+	title := it.Title
+	patch.Title = &title
+
+	if v, ok := it.Properties.Get("State"); ok {
+		s := v
+		patch.State = &s
+	}
+	if v, ok := it.Properties.Get("Type"); ok {
+		t := v
+		patch.Type = &t
+	}
+	if v, ok := it.Properties.Get("Assignees"); ok {
+		a := splitLines(v)
+		patch.Assignees = &a
+	}
+	if v, ok := it.Properties.Get("Labels"); ok {
+		l := splitLines(v)
+		patch.Labels = &l
+	}
+	if v, ok := it.Properties.Get("Milestone"); ok {
+		m := v
+		patch.Milestone = &m
+	}
+	if v, ok := it.Properties.Get("Iteration"); ok {
+		i := v
+		patch.Iteration = &i
+	}
+	if v, ok := it.Properties.Get("AreaPath"); ok {
+		ap := v
+		patch.AreaPath = &ap
+	}
+	if v, ok := it.Properties.Get("Parent"); ok {
+		p := v
+		patch.Parent = &p
+	}
+	if sec := it.Section("Description"); sec != nil {
+		body := sec.Body
+		patch.Body = &body
+	} else {
+		empty := ""
+		patch.Body = &empty
+	}
+	knownFields := knownCoreFields()
+	for _, k := range it.Properties.Keys() {
+		if !knownFields[k] {
+			v, _ := it.Properties.Get(k)
+			if patch.Properties == nil {
+				patch.Properties = map[string]string{}
+			}
+			patch.Properties[k] = v
+		}
+	}
+	return patch
+}
+
+// knownCoreFields returns the set of property keys that are handled as typed
+// fields and should not spill into the overflow Properties map.
+func knownCoreFields() map[string]bool {
+	return map[string]bool{
+		"Type": true, "State": true, "Assignees": true, "Labels": true,
+		"Milestone": true, "Iteration": true, "AreaPath": true, "Parent": true,
+		"RemoteId": true, "Url": true,
+	}
+}
+
+// splitLines splits a newline-delimited property value into non-empty trimmed lines.
+func splitLines(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, "\n")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 // slugify converts a string to a URL/filename-safe slug.
 func slugify(s string) string {
 	s = strings.ToLower(s)

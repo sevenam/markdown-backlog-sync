@@ -2,6 +2,7 @@ package github
 
 import (
 	"strconv"
+	"strings"
 
 	gogithub "github.com/google/go-github/v68/github"
 	"github.com/sevenam/markdown-backlog-sync/internal/provider"
@@ -48,4 +49,18 @@ func revOf(iss *gogithub.Issue) string {
 		return ""
 	}
 	return iss.UpdatedAt.UTC().Format("2006-01-02T15:04:05.999999999Z")
+}
+
+// toGitHubState maps a provider-neutral (or human-friendly markdown) state
+// string to the GitHub API's binary "open"/"closed" vocabulary.
+// Any state that semantically means "finished" maps to "closed";
+// everything else (including empty) maps to "open".
+func toGitHubState(state string) string {
+	switch strings.ToLower(strings.TrimSpace(state)) {
+	case "closed", "done", "complete", "completed", "resolved",
+		"wontfix", "won't fix", "won't do", "wontdo", "duplicate":
+		return "closed"
+	default:
+		return "open"
+	}
 }
