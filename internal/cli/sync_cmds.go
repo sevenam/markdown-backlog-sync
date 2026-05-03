@@ -1,17 +1,28 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/sevenam/markdown-backlog-sync/internal/cli/exitcode"
+	"github.com/sevenam/markdown-backlog-sync/internal/config"
+	"github.com/sevenam/markdown-backlog-sync/internal/markdown"
+	"github.com/sevenam/markdown-backlog-sync/internal/provider"
+	"github.com/sevenam/markdown-backlog-sync/internal/state"
+	"github.com/sevenam/markdown-backlog-sync/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
 // notImplemented is a placeholder used by command stubs that require
 // subsequent phases (sync engine + concrete providers) to do real work.
 func notImplemented(cmd *cobra.Command, what string) error {
-	fmt.Fprintf(cmd.ErrOrStderr(), "%s is not yet implemented in this build (Phase 1 foundation only)\n", what)
-	return exitcode.Errorf(exitcode.Usage, "%s requires a provider implementation", what)
+	fmt.Fprintf(cmd.ErrOrStderr(), "%s is not yet implemented in this build\n", what)
+	return exitcode.Errorf(exitcode.Usage, "%s requires a full sync engine implementation", what)
 }
 
 func newPullCmd(g *GlobalFlags) *cobra.Command {
@@ -20,12 +31,163 @@ func newPullCmd(g *GlobalFlags) *cobra.Command {
 		Use:   "pull",
 		Short: "Pull remote items into local Markdown files",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return notImplemented(cmd, "pull")
+			ws, cfg, err := loadWorkspaceAndConfig(g)
+			if err != nil {
+				return err
+			}
+
+			providers := cfg.Providers
+			if providerName != "" {
+				pCfg, ok := cfg.Provider(providerName)
+				if !ok {
+					return exitcode.Errorf(exitcode.Usage, "no provider named %q in config", providerName)
+				}
+				providers = []config.ProviderConfig{pCfg}
+			}
+			if len(providers) == 0 {
+				fmt.Fprintln(out(cmd, g.Quiet), "no providers configured")
+				return nil
+			}
+
+			be, err := chooseBackend(false, "", g.WorkspaceDir)
+			if err != nil {
+				return err
+			}
+			resolver := newResolverFromConfig(be, cfg)
+			reg := newProviderRegistry()
+
+			store, err := state.Open(ws.StateDir)
+			if err != nil {
+				return exitcode.Wrap(exitcode.WorkspaceIntegrity, err)
+			}
+
+			w := out(cmd, g.Quiet)
+			for _, pCfg := range providers {
+				prov, err := reg.Build(pCfg.Type, pCfg.Name, pCfg.Options, resolver)
+				if err != nil {
+					if errors.Is(err, provider.ErrAuth) {
+						return exitcode.Wrap(exitcode.Auth, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+					}
+					if errors.Is(err, provider.ErrUnknownType) {
+						return exitcode.Errorf(exitcode.Usage, "provider %q has unknown type %q", pCfg.Name, pCfg.Type)
+					}
+					return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+				}
+
+				fmt.Fprintf(w, "pulling from %s (%s)...\n", pCfg.Name, pCfg.Type)
+				n, err := pullProvider(cmd.Context(), prov, ws, store, g.DryRun, g.Verbose, w)
+				if err != nil {
+					if errors.Is(err, provider.ErrAuth) {
+						return exitcode.Wrap(exitcode.Auth, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+					}
+					if errors.Is(err, provider.ErrRateLimited) {
+						return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: rate limited — wait and retry", pCfg.Name))
+					}
+					return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+				}
+				if g.DryRun {
+					fmt.Fprintf(w, "  [dry-run] %d item(s) would be pulled from %s\n", n, pCfg.Name)
+				} else {
+					fmt.Fprintf(w, "  %d item(s) pulled from %s\n", n, pCfg.Name)
+				}
+			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&providerName, "provider", "", "scope to a single provider")
-	_ = g
 	return cmd
+}
+
+// pullProvider fetches all items from prov and writes them into ws.ItemsDir,
+// updating the state store. Returns the count of items processed.
+func pullProvider(
+	ctx context.Context,
+	prov provider.Provider,
+	ws *workspace.Workspace,
+	store *state.Store,
+	dryRun, verbose bool,
+	w io.Writer,
+) (int, error) {
+	items, err := prov.List(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	idx, err := store.LoadIndex()
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, item := range items {
+		mapKey := state.MapKey(prov.Name(), item.ID)
+		existingLocalID, exists := idx.Mapping[mapKey]
+
+		mdItem := remoteItemToMarkdown(item)
+		serialized, err := markdown.Serialize(mdItem)
+		if err != nil {
+			return count, fmt.Errorf("serialize item %s: %w", item.ID, err)
+		}
+
+		var localID, localPath string
+		if exists {
+			ist, err := store.LoadItem(existingLocalID)
+			if err == nil && ist != nil {
+				localID = existingLocalID
+				localPath = ist.LocalPath
+			} else {
+				// State entry missing — treat as new.
+				exists = false
+			}
+		}
+		if !exists {
+			localID = safeLocalID(prov.Name(), item.ID)
+			localPath = filepath.Join(ws.ItemsDir, safeFilename(item.ID, item.Title))
+		}
+
+		if verbose {
+			action := "update"
+			if !exists {
+				action = "create"
+			}
+			fmt.Fprintf(w, "  [%s] #%s %s\n", action, item.ID, item.Title)
+		}
+
+		if !dryRun {
+			if err := os.MkdirAll(filepath.Dir(localPath), 0o755); err != nil {
+				return count, err
+			}
+			if err := os.WriteFile(localPath, []byte(serialized), 0o644); err != nil {
+				return count, err
+			}
+
+			ist := &state.ItemState{
+				LocalID:      localID,
+				LocalPath:    localPath,
+				Provider:     prov.Name(),
+				RemoteID:     item.ID,
+				RemoteURL:    item.URL,
+				RemoteRev:    item.Rev,
+				ContentHash:  state.Hash(serialized),
+				LastSyncedAt: time.Now().UTC().Format(time.RFC3339),
+			}
+			if err := store.SaveItem(ist); err != nil {
+				return count, err
+			}
+			if err := store.SaveSnapshot(localID, serialized); err != nil {
+				return count, err
+			}
+			idx.Mapping[mapKey] = localID
+		}
+		count++
+	}
+
+	if !dryRun {
+		if err := store.SaveIndex(idx); err != nil {
+			return count, err
+		}
+	}
+	return count, nil
 }
 
 func newPushCmd(g *GlobalFlags) *cobra.Command {

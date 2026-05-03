@@ -6,7 +6,7 @@ Type
 Area
 :   GitHub Issues
 State
-:   Proposed
+:   Done
 Priority
 :   1
 Phase
