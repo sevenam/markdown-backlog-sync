@@ -1,0 +1,9 @@
+# markdown-backlog-sync workspace configuration
+
+[workspace]
+items_dir = "backlog"
+
+[[provider]]
+name = "gh-main"
+type = "github-issues"
+repo = "sevenam/markdown-backlog-sync"
