@@ -459,11 +459,96 @@ func newSyncCmd(g *GlobalFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Bidirectionally synchronize local Markdown files with the remote",
+		Long: `sync pushes local changes to the remote first, then pulls the latest
+remote state back down. Items created locally are assigned a RemoteId
+on create. Remote-only changes are written to local files on pull.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return notImplemented(cmd, "sync")
+			ws, cfg, err := loadWorkspaceAndConfig(g)
+			if err != nil {
+				return err
+			}
+
+			providers := cfg.Providers
+			if providerName != "" {
+				pCfg, ok := cfg.Provider(providerName)
+				if !ok {
+					return exitcode.Errorf(exitcode.Usage, "no provider named %q in config", providerName)
+				}
+				providers = []config.ProviderConfig{pCfg}
+			}
+			if len(providers) == 0 {
+				fmt.Fprintln(out(cmd, g.Quiet), "no providers configured")
+				return nil
+			}
+
+			// Only create new (untracked) items when the target provider is unambiguous.
+			createNew := len(providers) == 1 || providerName != ""
+
+			be, err := chooseBackend(false, "", g.WorkspaceDir)
+			if err != nil {
+				return err
+			}
+			resolver := newResolverFromConfig(be, cfg)
+			reg := newProviderRegistry()
+
+			store, err := state.Open(ws.StateDir)
+			if err != nil {
+				return exitcode.Wrap(exitcode.WorkspaceIntegrity, err)
+			}
+
+			w := out(cmd, g.Quiet)
+			for _, pCfg := range providers {
+				prov, err := reg.Build(pCfg.Type, pCfg.Name, pCfg.Options, resolver)
+				if err != nil {
+					if errors.Is(err, provider.ErrAuth) {
+						return exitcode.Wrap(exitcode.Auth, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+					}
+					if errors.Is(err, provider.ErrUnknownType) {
+						return exitcode.Errorf(exitcode.Usage, "provider %q has unknown type %q", pCfg.Name, pCfg.Type)
+					}
+					return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+				}
+
+				fmt.Fprintf(w, "syncing %s (%s)...\n", pCfg.Name, pCfg.Type)
+
+				// Push local changes first so newly created items get a RemoteId
+				// before the subsequent pull overwrites the file.
+				nCreated, nUpdated, err := pushProvider(cmd.Context(), prov, ws, store, g.DryRun, g.Verbose, createNew, w)
+				if err != nil {
+					if errors.Is(err, provider.ErrAuth) {
+						return exitcode.Wrap(exitcode.Auth, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+					}
+					if errors.Is(err, provider.ErrRateLimited) {
+						return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: rate limited — wait and retry", pCfg.Name))
+					}
+					if errors.Is(err, provider.ErrConflict) {
+						return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: conflict detected — resolve manually and retry", pCfg.Name))
+					}
+					return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q push: %w", pCfg.Name, err))
+				}
+
+				// Pull remote state to pick up remote-only changes and to refresh
+				// any fields the server may have set (e.g. issue numbers, timestamps).
+				nPulled, err := pullProvider(cmd.Context(), prov, ws, store, g.DryRun, g.Verbose, w)
+				if err != nil {
+					if errors.Is(err, provider.ErrAuth) {
+						return exitcode.Wrap(exitcode.Auth, fmt.Errorf("provider %q: %w", pCfg.Name, err))
+					}
+					if errors.Is(err, provider.ErrRateLimited) {
+						return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q: rate limited — wait and retry", pCfg.Name))
+					}
+					return exitcode.Wrap(exitcode.Generic, fmt.Errorf("provider %q pull: %w", pCfg.Name, err))
+				}
+
+				prefix := ""
+				if g.DryRun {
+					prefix = "[dry-run] "
+				}
+				fmt.Fprintf(w, "  %s%d created, %d updated, %d pulled\n", prefix, nCreated, nUpdated, nPulled)
+			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&providerName, "provider", "", "scope to a single provider")
-	_ = g
 	return cmd
 }
