@@ -1,4 +1,4 @@
-﻿# Sync state sidecar (.sync/)
+# Sync state sidecar (.sync/)
 
 ## Properties
 Type: issue

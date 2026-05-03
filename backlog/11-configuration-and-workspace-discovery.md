@@ -1,4 +1,4 @@
-﻿# Configuration and workspace discovery
+# Configuration and workspace discovery
 
 ## Properties
 Type: issue

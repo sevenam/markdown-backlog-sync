@@ -1,4 +1,4 @@
-﻿# GitHub Issues provider implementation
+# GitHub Issues provider implementation
 
 ## Properties
 Type: issue

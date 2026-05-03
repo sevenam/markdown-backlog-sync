@@ -1,4 +1,4 @@
-﻿# GitHub Issues field mapping
+# GitHub Issues field mapping
 
 ## Properties
 Type: issue

@@ -1,4 +1,4 @@
-﻿# Improve the Properties
+# Improve the Properties
 
 ## Properties
 Type: issue

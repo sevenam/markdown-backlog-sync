@@ -1,4 +1,4 @@
-﻿# Backlog items should be updated with issue id
+# Backlog items should be updated with issue id
 
 ## Properties
 Type: issue

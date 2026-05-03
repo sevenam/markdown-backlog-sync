@@ -1,4 +1,4 @@
-﻿# Azure DevOps iterations and area paths
+# Azure DevOps iterations and area paths
 
 ## Properties
 Type: issue

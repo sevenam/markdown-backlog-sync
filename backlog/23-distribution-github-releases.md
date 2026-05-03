@@ -1,4 +1,4 @@
-﻿# Distribution: GitHub Releases
+# Distribution: GitHub Releases
 
 ## Properties
 Type: issue

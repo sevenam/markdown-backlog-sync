@@ -1,4 +1,4 @@
-﻿# GitHub Projects v2 fields mapping
+# GitHub Projects v2 fields mapping
 
 ## Properties
 Type: issue

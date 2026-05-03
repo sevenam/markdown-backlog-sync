@@ -1,4 +1,4 @@
-﻿# GitHub sub-issues, task lists, and Projects v2 parent field
+# GitHub sub-issues, task lists, and Projects v2 parent field
 
 ## Properties
 Type: issue

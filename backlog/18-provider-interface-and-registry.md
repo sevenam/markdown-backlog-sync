@@ -1,4 +1,4 @@
-﻿# Provider interface and registry
+# Provider interface and registry
 
 ## Properties
 Type: issue

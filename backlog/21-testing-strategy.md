@@ -1,4 +1,4 @@
-﻿# Testing strategy
+# Testing strategy
 
 ## Properties
 Type: issue

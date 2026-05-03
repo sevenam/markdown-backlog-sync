@@ -1,4 +1,4 @@
-﻿# GitHub labels and milestones
+# GitHub labels and milestones
 
 ## Properties
 Type: issue

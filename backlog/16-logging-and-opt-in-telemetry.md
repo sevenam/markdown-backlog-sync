@@ -1,4 +1,4 @@
-﻿# Logging and (opt-in) telemetry
+# Logging and (opt-in) telemetry
 
 ## Properties
 Type: issue

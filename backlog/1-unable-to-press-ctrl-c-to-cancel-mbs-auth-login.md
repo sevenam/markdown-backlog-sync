@@ -1,4 +1,4 @@
-﻿# Unable to press CTRL+C to cancel mbs auth login
+# Unable to press CTRL+C to cancel mbs auth login
 
 ## Properties
 Type: issue

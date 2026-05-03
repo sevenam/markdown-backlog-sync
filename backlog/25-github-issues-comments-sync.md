@@ -1,4 +1,4 @@
-﻿# GitHub Issues comments sync
+# GitHub Issues comments sync
 
 ## Properties
 Type: issue

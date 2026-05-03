@@ -1,4 +1,4 @@
-﻿# Secure credential storage
+# Secure credential storage
 
 ## Properties
 Type: issue

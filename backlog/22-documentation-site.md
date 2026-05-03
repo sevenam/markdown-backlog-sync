@@ -1,4 +1,4 @@
-﻿# Documentation site
+# Documentation site
 
 ## Properties
 Type: issue

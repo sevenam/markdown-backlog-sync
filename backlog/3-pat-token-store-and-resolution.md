@@ -1,4 +1,4 @@
-﻿# PAT token store and resolution
+# PAT token store and resolution
 
 ## Properties
 Type: issue

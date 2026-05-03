@@ -1,4 +1,4 @@
-﻿# Azure DevOps work item field mapping
+# Azure DevOps work item field mapping
 
 ## Properties
 Type: issue

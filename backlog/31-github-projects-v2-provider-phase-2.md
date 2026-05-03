@@ -1,4 +1,4 @@
-﻿# GitHub Projects v2 provider (phase 2)
+# GitHub Projects v2 provider (phase 2)
 
 ## Properties
 Type: issue

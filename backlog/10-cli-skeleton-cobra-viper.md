@@ -1,4 +1,4 @@
-﻿# CLI skeleton (cobra + viper)
+# CLI skeleton (cobra + viper)
 
 ## Properties
 Type: issue

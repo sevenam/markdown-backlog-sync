@@ -1,4 +1,4 @@
-﻿# Error handling and exit codes
+# Error handling and exit codes
 
 ## Properties
 Type: issue

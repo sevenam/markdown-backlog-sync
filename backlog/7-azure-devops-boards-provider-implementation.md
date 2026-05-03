@@ -1,4 +1,4 @@
-﻿# Azure DevOps Boards provider implementation
+# Azure DevOps Boards provider implementation
 
 ## Properties
 Type: issue

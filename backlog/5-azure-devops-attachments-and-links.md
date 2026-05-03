@@ -1,4 +1,4 @@
-﻿# Azure DevOps attachments and links
+# Azure DevOps attachments and links
 
 ## Properties
 Type: issue

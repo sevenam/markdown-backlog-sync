@@ -1,4 +1,4 @@
-﻿# Sync engine (pull / push / bidirectional)
+# Sync engine (pull / push / bidirectional)
 
 ## Properties
 Type: issue

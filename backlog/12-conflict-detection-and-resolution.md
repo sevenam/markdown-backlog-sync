@@ -1,4 +1,4 @@
-﻿# Conflict detection and resolution
+# Conflict detection and resolution
 
 ## Properties
 Type: issue

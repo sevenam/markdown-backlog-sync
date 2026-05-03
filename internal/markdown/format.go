@@ -142,6 +142,9 @@ func parseErrf(line int, format string, a ...any) *ParseError {
 // Parse reads an item file from src.
 func Parse(src string) (*Item, error) {
 	// Normalize line endings; a final newline is optional.
+	// Strip a leading UTF-8 BOM (EF BB BF) if present — editors on Windows
+	// sometimes write one and it would confuse the H1 detection.
+	src = strings.TrimPrefix(src, "\xef\xbb\xbf")
 	src = strings.ReplaceAll(src, "\r\n", "\n")
 	scanner := bufio.NewScanner(strings.NewReader(src))
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)

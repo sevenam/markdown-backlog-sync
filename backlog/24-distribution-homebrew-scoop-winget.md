@@ -1,4 +1,4 @@
-﻿# Distribution: Homebrew, Scoop, winget
+# Distribution: Homebrew, Scoop, winget
 
 ## Properties
 Type: issue

@@ -1,4 +1,4 @@
-﻿# Cross-platform build and packaging
+# Cross-platform build and packaging
 
 ## Properties
 Type: issue

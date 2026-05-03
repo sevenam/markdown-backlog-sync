@@ -1,4 +1,4 @@
-﻿# Markdown item file format (pure Markdown)
+# Markdown item file format (pure Markdown)
 
 ## Properties
 Type: issue

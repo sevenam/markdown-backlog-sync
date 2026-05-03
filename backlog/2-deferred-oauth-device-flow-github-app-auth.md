@@ -1,4 +1,4 @@
-﻿# (Deferred) OAuth Device Flow / GitHub App auth
+# (Deferred) OAuth Device Flow / GitHub App auth
 
 ## Properties
 Type: issue

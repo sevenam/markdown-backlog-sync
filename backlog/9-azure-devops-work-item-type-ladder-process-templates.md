@@ -1,4 +1,4 @@
-﻿# Azure DevOps work item type ladder & process templates
+# Azure DevOps work item type ladder & process templates
 
 ## Properties
 Type: issue
